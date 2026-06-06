@@ -1,0 +1,31 @@
+name: External Trigger Stub
+
+on:
+  repository_dispatch:
+    types:
+      - external_tick
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log trigger metadata
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ACTION: ${{ github.event.action }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          ACTOR: ${{ github.actor }}
+          PAYLOAD_SOURCE: ${{ github.event.client_payload.source }}
+          PAYLOAD_SENT_AT: ${{ github.event.client_payload.sent_at }}
+        run: |
+          echo "UTC timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          echo "JST timestamp: $(TZ=Asia/Tokyo date +"%Y-%m-%dT%H:%M:%S%z")"
+          echo "event name: ${EVENT_NAME}"
+          echo "event action: ${EVENT_ACTION:-none}"
+          echo "run id: ${RUN_ID}"
+          echo "run number: ${RUN_NUMBER}"
+          echo "actor: ${ACTOR}"
+          echo "client_payload.source: ${PAYLOAD_SOURCE:-none}"
+          echo "client_payload.sent_at: ${PAYLOAD_SENT_AT:-none}"
