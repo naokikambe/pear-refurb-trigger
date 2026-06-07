@@ -1,6 +1,6 @@
 # pear-refurb-trigger
 
-External cron trigger layer for starting the watcher workflow from either GitHub native schedule or an external HTTP cron service.
+External cron trigger layer for starting the watcher workflow from an external HTTP cron service, with a disabled GitHub native schedule template kept for future use.
 
 This repository receives a trigger event, logs timing metadata, and starts the watcher repository through GitHub Actions `workflow_dispatch`.
 
@@ -8,9 +8,9 @@ This repository receives a trigger event, logs timing metadata, and starts the w
 
 This version:
 
-- accepts GitHub native `schedule` events
 - accepts `repository_dispatch` events with type `external_tick`
 - supports manual `workflow_dispatch` runs for testing
+- keeps a disabled GitHub native `schedule` template for future use
 - logs UTC and JST timestamps
 - logs GitHub run metadata
 - logs optional `client_payload.source` and `client_payload.sent_at`
@@ -26,15 +26,20 @@ Workflow name:
 External Trigger Stub
 ```
 
-Supported events:
+Enabled events:
 
 ```yaml
-schedule:
-  - cron: "7,17,27,37,47,57 * * * *"
 repository_dispatch:
   types:
     - external_tick
 workflow_dispatch:
+```
+
+Native GitHub schedule support is kept in the workflow as a commented template and is currently disabled:
+
+```yaml
+schedule:
+  - cron: "7,17,27,37,47,57 * * * *"
 ```
 
 Run history is checked in the GitHub Actions UI. The timestamps in each run can be used to compare trigger timing with observed GitHub Actions execution times.
@@ -42,10 +47,11 @@ Run history is checked in the GitHub Actions UI. The timestamps in each run can 
 The workflow maps event sources to `trigger_source`:
 
 ```text
-schedule -> github-schedule
 repository_dispatch -> external-dispatch
 workflow_dispatch -> manual
 ```
+
+If native schedule is re-enabled later, schedule events map to `github-schedule`.
 
 The trigger then calls the watcher workflow dispatch API with that `trigger_source` input.
 
