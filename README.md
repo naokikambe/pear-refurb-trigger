@@ -1,20 +1,22 @@
 # pear-refurb-trigger
 
-External cron trigger stub for checking whether an HTTP-based cron service can trigger GitHub Actions at a stable interval.
+External cron trigger layer for starting the watcher workflow from either GitHub native schedule or an external HTTP cron service.
 
-This repository is intentionally minimal. It records that an external service called GitHub's `repository_dispatch` endpoint by creating a GitHub Actions run and logging basic timing metadata.
+This repository receives a trigger event, logs timing metadata, and starts the watcher repository through GitHub Actions `workflow_dispatch`.
 
 ## Scope
 
-This first version only:
+This version:
 
+- accepts GitHub native `schedule` events
 - accepts `repository_dispatch` events with type `external_tick`
 - supports manual `workflow_dispatch` runs for testing
 - logs UTC and JST timestamps
 - logs GitHub run metadata
 - logs optional `client_payload.source` and `client_payload.sent_at`
+- dispatches the watcher workflow
 
-This version does not integrate with the watcher, notifier, state storage, repository dispatch to another repository, or mail delivery.
+This repository does not access watcher targets, state storage, notifier dispatch, or mail delivery.
 
 ## Workflow
 
@@ -27,13 +29,51 @@ External Trigger Stub
 Supported events:
 
 ```yaml
+schedule:
+  - cron: "7,17,27,37,47,57 * * * *"
 repository_dispatch:
   types:
     - external_tick
 workflow_dispatch:
 ```
 
-Run history is checked in the GitHub Actions UI. The timestamps in each run can be used to compare the external cron service's intended interval with observed GitHub Actions execution times.
+Run history is checked in the GitHub Actions UI. The timestamps in each run can be used to compare trigger timing with observed GitHub Actions execution times.
+
+The workflow maps event sources to `trigger_source`:
+
+```text
+schedule -> github-schedule
+repository_dispatch -> external-dispatch
+workflow_dispatch -> manual
+```
+
+The trigger then calls the watcher workflow dispatch API with that `trigger_source` input.
+
+## Configuration
+
+Configure the following GitHub Secret:
+
+```text
+WATCHER_DISPATCH_TOKEN
+```
+
+Configure the following GitHub Variables:
+
+```text
+WATCHER_REPO
+WATCHER_WORKFLOW
+WATCHER_REF
+```
+
+Recommended values:
+
+```text
+WATCHER_REPO=<OWNER>/<WATCHER_REPOSITORY>
+WATCHER_WORKFLOW=<WATCHER_WORKFLOW_FILE>
+WATCHER_REF=main
+```
+
+`WATCHER_DISPATCH_TOKEN` must be able to dispatch the configured watcher workflow. Do not log the token or Authorization header.
 
 ## Manual Test
 
@@ -61,7 +101,7 @@ The token must not be committed, logged, or shared. Do not log Authorization hea
 
 This is a public repository. Do not put tokens, Authorization header values, private URLs, or operational secrets in files, logs, workflow output, issues, or documentation.
 
-This repository does not require GitHub Secrets in its initial version.
+The workflow intentionally logs only timing metadata, GitHub run metadata, trigger source, watcher repository/workflow identifiers, and watcher dispatch HTTP status.
 
 ## Out of Scope
 
@@ -70,5 +110,4 @@ The following are intentionally outside this repository's initial scope:
 - external cron service configuration
 - GitHub PAT creation
 - disabling or changing the existing watcher schedule
-- triggering the existing watcher workflow
 - changing existing watcher or notifier repositories
