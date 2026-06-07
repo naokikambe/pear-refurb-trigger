@@ -83,13 +83,8 @@ jobs:
           echo "trigger_source=${trigger_source}"
 
           request_body="$(mktemp)"
-          python3 - "$WATCHER_REF" "$trigger_source" > "$request_body" <<'PY'
-import json
-import sys
-
-ref, trigger_source = sys.argv[1], sys.argv[2]
-print(json.dumps({"ref": ref, "inputs": {"trigger_source": trigger_source}}))
-PY
+          python3 -c 'import json, sys; print(json.dumps({"ref": sys.argv[1], "inputs": {"trigger_source": sys.argv[2]}}))' \
+            "$WATCHER_REF" "$trigger_source" > "$request_body"
 
           status="$(
             curl -sS -o /dev/null -w "%{http_code}" \
